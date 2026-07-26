@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Typing Experiment</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+<style>
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    margin:40px;
+}
+
+#expected,#typedText{
+    width:900px;
+    min-height:90px;
+    border:1px solid #ccc;
+    padding:15px;
+    font-size:24px;
+    line-height:1.8;
+    font-family:Consolas,monospace;
+}
+
+.correct{color:green;}
+.wrong{color:red;}
+.pending{color:#888;}
+</style>
+</head>
+
+<body>
+
+<h2>Typing Experiment</h2>
+
+<p><b>Expected Text</b></p>
+<div id="expected"></div>
+
+<br>
+
+<p><b>You Typed</b></p>
+<br><br>
+
+<button type="button" onclick="finishTest()">
+    Finish Test
+</button>
+<div id="typedText"></div>
+
+<form id="resultForm" action="/result" method="POST">
+<input type="hidden" name="participant" value="{{ participant }}">
+<input type="hidden" name="layout" value="{{ layout }}">
+<input type="hidden" id="elapsed" name="elapsed">
+<input type="hidden" id="accuracy" name="accuracy">
+<input type="hidden" id="wpm" name="wpm">
+</form>
+
+<script>
+
+const paragraph = `{{ paragraph|safe }}`;
+const keyMap = {{ mapping|safe }};
+
+let typed=" ";
+let started=false;
+let startTime=null;
+
+render();
+
+document.addEventListener("keydown",function(event){
+
+    event.preventDefault();
+
+    if(!started){
+        started=true;
+        startTime=Date.now();
+    }
+
+    if(["Shift","Control","Alt","Meta","CapsLock","Tab"].includes(event.key))
+        return;
+
+    if(event.key==="Backspace"){
+        typed=typed.slice(0,-1);
+        render();
+        return;
+    }
+
+    if(event.key==="Enter"){
+        return;
+    }
+
+    if(event.key.length>1)
+        return;
+
+    let out = keyMap[event.key] ?? event.key;
+
+    typed += out;
+
+    render();
+
+    //if(typed.length>=paragraph.length){
+    //    finishTest();
+    //}
+
+});
+
+function render(){
+
+    let expectedHTML="";
+    let typedHTML="";
+
+    for(let i=0;i<paragraph.length;i++){
+
+        if(i<typed.length){
+
+            if(typed[i].toLowerCase() ===  paragraph[i].toLowerCase()){
+                expectedHTML += "<span class='correct'>"+paragraph[i]+"</span>";
+            }
+            else{
+                expectedHTML += "<span class='wrong'>"+paragraph[i]+"</span>";
+            }
+
+        }else{
+
+            expectedHTML += "<span class='pending'>"+paragraph[i]+"</span>";
+
+        }
+
+    }
+
+    for(let i=0;i<typed.length;i++){
+
+        if(i<paragraph.length && typed[i].toLowerCase() === paragraph[i].toLowerCase() ){
+            typedHTML += "<span class='correct'>"+typed[i]+"</span>";
+        }
+        else{
+            typedHTML += "<span class='wrong'>"+typed[i]+"</span>";
+        }
+
+    }
+
+    document.getElementById("expected").innerHTML=expectedHTML;
+    document.getElementById("typedText").innerHTML=typedHTML;
+
+}
+
+function finishTest(){
+
+    let elapsed=(Date.now()-startTime)/1000.0;
+
+    let correct=0;
+
+    for(let i=0;i<Math.min(typed.length,paragraph.length);i++){
+
+        if(typed[i].toLowerCase() ===  paragraph[i].toLowerCase())
+            correct++;
+
+    }
+
+    let accuracy=(correct/paragraph.length)*100;
+    let words=typed.length/5;
+    let wpm=words/(elapsed/60);
+
+    document.getElementById("elapsed").value=elapsed.toFixed(2);
+    document.getElementById("accuracy").value=accuracy.toFixed(2);
+    document.getElementById("wpm").value=wpm.toFixed(2);
+
+    document.getElementById("resultForm").submit();
+
+}
+
+</script>
+
+</body>
+</html>
