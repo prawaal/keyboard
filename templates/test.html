@@ -58,7 +58,7 @@ body{
 const paragraph = `{{ paragraph|safe }}`;
 const keyMap = {{ mapping|safe }};
 
-let typed=" ";
+let typed="";
 let started=false;
 let startTime=null;
 
@@ -83,6 +83,8 @@ document.addEventListener("keydown",function(event){
     }
 
     if(event.key==="Enter"){
+        event.preventDefault();
+        finishTest();
         return;
     }
 

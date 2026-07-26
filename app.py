@@ -41,7 +41,10 @@ def result():
 
     os.makedirs("results", exist_ok=True)
 
-    with open("results/results.csv", "a", newline="") as f:
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    filename = f"results/results_{participant}_{timestamp}.csv"
+
+    with open(filename, "a", newline="") as f:
 
         writer = csv.writer(f)
 
